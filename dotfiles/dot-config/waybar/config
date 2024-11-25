@@ -1,0 +1,28 @@
+[{
+	"output": "eDP-1",
+	"include": [
+		"$HOME/.config/waybar/default-layout.json"
+	],
+
+	//Modules
+	"clock": {
+		"calendar": {
+			"mode-mon-col": 3
+		}
+	},
+
+	"custom/layout": {
+		"exec": "$HOME/.config/waybar/workspace-layout.sh eDP-1"
+	}
+},
+{
+	"output": "HDMI-A-1",
+	"include": [
+		"$HOME/.config/waybar/default-layout.json"
+	],
+
+	//Modules
+	"custom/layout": {
+		"exec": "$HOME/.config/waybar/workspace-layout.sh HDMI-A-1"
+	}
+}]
