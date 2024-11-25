@@ -1,0 +1,121 @@
+# Look for handler, "ansible.builtin.debug", register
+---
+- name: "Setting up NetworkManager configuration"
+  hosts: localhost
+  tasks:
+    - name: "Setting up IPv6 Privacy Extension"
+      become: true
+      copy:
+        content: |
+          [connections]
+          ipv6.ip6-privacy=2
+        dest: /etc/NetworkManager/conf.d/10-ip6-privacy.conf
+        force: false
+      notify: Reload NetworkManager
+  handlers:
+    - name: Reload NetworkManager
+      become: true
+      command: nmcli general reload
+      notify: Disable networking
+
+    - name: Disable networking
+      command: nmcli networking off
+      notify: Enable networking
+
+    - name: Enable networking
+      command: nmcli networking on
+      notify: Wait for network to start
+    # FIX: This prints empty lines in playbook's output screen. Figure out how to remove it (or add a loading animation if possible)
+    - name: Wait for network to start
+      command: nmcli networking connectivity
+      register: connectivity
+      until: connectivity.stdout == "full"
+
+- name: Setting up DNF packages
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Removing packaes
+      dnf:
+        name:
+          - nano
+          - hplip
+          - firefox
+        state: absent
+    - name: Swapping Fedora Release Packages for Sway's
+      dnf:
+        name:
+          - fedora-release-sway
+          - fedora-release-identity-sway
+        state: latest
+        allowerasing: true
+    - name: Installing packages
+      dnf:
+        name:
+          - nvim
+          - fish
+          - flatpak
+          - toolbox
+          - git
+          - stow
+        state: latest
+    - name: Upgrade all packages
+      dnf:
+        name: "*"
+        state: latest
+
+- name: Setting Flatpak
+  hosts: localhost
+  tasks:
+    - name: Add Flathub as Flatpak Repo
+      flatpak_remote:
+        name: flathub
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
+    - name: Install Flatpaks from Flathub
+      flatpak:
+          name:
+            - io.gitlab.librewolf-community
+            - org.keepassxc.KeePassXC
+            - org.mozilla.firefox
+            - com.github.tchx84.Flatseal
+            - io.freetubeapp.FreeTube
+          method: user
+          state: latest
+
+- name: Disabling services/daemons
+  hosts: localhost
+  tasks:
+    - name: Stop service shhd.socket
+      service:
+        name: sshd.socket
+        enabled: false 
+        state: stopped
+    - name: Stop service sshd.service
+      service:
+        name: sshd.service
+        enabled: false
+        state: stopped
+
+- name: Setting dotfiles
+  hosts: localhost
+  vars:
+    dotfile_dir: "{{ playbook_dir }}"
+    cache_stow_file: "{{ dotfile_dir }}/.cache_stow"
+  tasks:
+    - name: Gather package facts
+      package_facts:
+        manager: auto
+
+    - name: Run Stow
+      command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles dotfiles
+      args:
+        creates: "{{ cache_stow_file }}"
+      notify: Cache Stow
+      when: "'stow' in ansible_facts.packages"
+  handlers:
+    - name: Cache Stow
+      file:
+        path: "{{ cache_stow_file }}"
+        state: touch
+...

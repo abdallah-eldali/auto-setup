@@ -1,0 +1,24 @@
+[Context]
+shared=!network
+sockets=!pcsc;!ssh-auth
+devices=!all
+filesystems=!xdg-run/gvfs;!xdg-config/kdeglobals;!/tmp;~/Passwords/;!host
+
+[Environment]
+SSH_AUTH_SOCK=
+
+[System Bus Policy]
+org.freedesktop.login1=none
+
+[Session Bus Policy]
+com.canonical.Unity.Session=none
+org.freedesktop.Notifications=none
+org.gnome.SessionManager.Presence=none
+org.kde.StatusNotifierWatcher=none
+org.kde.KGlobalSettings=none
+org.freedesktop.ScreenSaver=none
+com.canonical.AppMenu.Registrar=none
+org.kde.kconfig.notify=none
+org.gnome.ScreenSaver=none
+org.gnome.SessionManager=none
+org.freedesktop.secrets=none
