@@ -4,7 +4,7 @@ Auto Setup
 
 # Description
 
-Automates the setup of my personal Linux machine (Fedora Netinstall) using Ansible and GNU Stow.
+Automates the setup of my personal Linux machine (Fedora Netinstall) using Ansible.
 
 # Usage
 
