@@ -133,7 +133,7 @@
           register: ansible_installation
 
         - name: Run Stow
-          command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles --no-folding dotfiles
+          command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles dotfiles
           args:
             creates: "{{ cache_stow_file }}"
           notify: Cache Stow
