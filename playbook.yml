@@ -41,6 +41,7 @@
           - nano
           - hplip
           - firefox
+          - xarchiver
         state: absent
     - name: Swapping Fedora Release Packages for Sway's
       dnf:
@@ -67,6 +68,10 @@
 - name: Setting Flatpak
   hosts: localhost
   tasks:
+    - name: Installing Flatpak Package
+      dnf:
+        name: flatpak
+        state: latest
     - name: Add Flathub as Flatpak Repo
       flatpak_remote:
         name: flathub
@@ -97,22 +102,43 @@
         enabled: false
         state: stopped
 
-- name: Setting dotfiles
+- name: Setting configuration
   hosts: localhost
   vars:
     dotfile_dir: "{{ playbook_dir }}"
     cache_stow_file: "{{ dotfile_dir }}/.cache_stow"
   tasks:
-    - name: Gather package facts
-      package_facts:
-        manager: auto
+    - name: Check cache stow
+      stat:
+        path: "{{ cache_stow_file }}"
+      register: cache_stow
+    - name: Setting dotfiles
+      when: not cache_stow.stat.exists
+      block:
+        - name: Deleting old config files
+          file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - "{{ ansible_env.HOME }}/.config"
+            - "{{ ansible_env.HOME }}/.bashrc"
+            - "{{ ansible_env.HOME }}/.bashrc.d"
+            - "{{ ansible_env.HOME }}/.local/share/flatpak/overrides"
+   
+        - name: Installing Ansible Package
+          become: true
+          dnf:
+            name: ansible
+            state: latest
+          register: ansible_installation
 
-    - name: Run Stow
-      command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles dotfiles
-      args:
-        creates: "{{ cache_stow_file }}"
-      notify: Cache Stow
-      when: "'stow' in ansible_facts.packages"
+        - name: Run Stow
+          command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles --no-folding dotfiles
+          args:
+            creates: "{{ cache_stow_file }}"
+          notify: Cache Stow
+          when: ansible_installation is succeeded
+  
   handlers:
     - name: Cache Stow
       file:
