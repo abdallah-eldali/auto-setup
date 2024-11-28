@@ -58,7 +58,6 @@
           - flatpak
           - toolbox
           - git
-          - stow
         state: latest
     - name: Upgrade all packages
       dnf:
@@ -69,6 +68,7 @@
   hosts: localhost
   tasks:
     - name: Installing Flatpak Package
+      become: true
       dnf:
         name: flatpak
         state: latest
@@ -105,43 +105,16 @@
 - name: Setting configuration
   hosts: localhost
   vars:
-    dotfile_dir: "{{ playbook_dir }}"
+    dotfile_dir: "{{ playbook_dir }}/dotfiles"
     cache_stow_file: "{{ dotfile_dir }}/.cache_stow"
+    dotfile_paths:
+      - "{{ ansible_env.HOME }}/.config"
+      - "{{ ansible_env.HOME }}/.bashrc"
+      - "{{ ansible_env.HOME }}/.bashrc.d"
+      - "{{ ansible_env.HOME }}/.local/share/flatpak/overrides"
+      - "{{ ansible_env.HOME }}/.bash_profile"
   tasks:
-    - name: Check cache stow
-      stat:
-        path: "{{ cache_stow_file }}"
-      register: cache_stow
-    - name: Setting dotfiles
-      when: not cache_stow.stat.exists
-      block:
-        - name: Deleting old config files
-          file:
-            path: "{{ item }}"
-            state: absent
-          loop:
-            - "{{ ansible_env.HOME }}/.config"
-            - "{{ ansible_env.HOME }}/.bashrc"
-            - "{{ ansible_env.HOME }}/.bashrc.d"
-            - "{{ ansible_env.HOME }}/.local/share/flatpak/overrides"
-   
-        - name: Installing Ansible Package
-          become: true
-          dnf:
-            name: ansible
-            state: latest
-          register: ansible_installation
-
-        - name: Run Stow
-          command: stow --dir {{ dotfile_dir }} --target {{ ansible_env.HOME }} --verbose --dotfiles dotfiles
-          args:
-            creates: "{{ cache_stow_file }}"
-          notify: Cache Stow
-          when: ansible_installation is succeeded
-  
-  handlers:
-    - name: Cache Stow
-      file:
-        path: "{{ cache_stow_file }}"
-        state: touch
+    - ansible.builtin.include_tasks:
+        file: dotfiles-task.yml
+      loop: "{{ dotfile_paths }}"
 ...

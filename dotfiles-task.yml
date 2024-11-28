@@ -1,0 +1,22 @@
+# Get the item's information
+- name: Get stats of the dotfile
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: sym
+
+# Delete if it's not a sym link
+- name: Delete "{{ item }}" 
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  when: sym.stat.islnk is defined and (sym.stat.islnk == False or sym.stat.lnk_source != dotfile_dir ~ "/" ~ (item|basename))
+  register: del_status 
+
+# Create links
+
+- name: Creating symlinks
+  file:
+    src: "{{ dotfile_dir }}/{{ item | basename }}" 
+    dest: "{{ item }}"
+    state: link
+  when: del_status is succeeded 
