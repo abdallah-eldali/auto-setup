@@ -45,6 +45,8 @@
           - firefox
           - xarchiver
         state: absent
+        allowerasing: true
+        autoremove: true
     - name: Swapping Fedora Release Packages for Sway's
       ansible.builtin.dnf:
         name:
@@ -92,6 +94,7 @@
 
 - name: Disabling services/daemons
   hosts: localhost
+  become: true
   tasks:
     - name: Stop service shhd.socket
       ansible.builtin.service:
@@ -112,7 +115,6 @@
     dotfile_paths:
       - "{{ ansible_env.HOME }}/.config"
       - "{{ ansible_env.HOME }}/.bashrc"
-      - "{{ ansible_env.HOME }}/.bashrc.d"
       - "{{ ansible_env.HOME }}/.local/share/flatpak/overrides"
       - "{{ ansible_env.HOME }}/.bash_profile"
   tasks:
