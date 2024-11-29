@@ -11,7 +11,7 @@ Automates the setup of my personal Linux machine (Fedora Netinstall) using Ansib
 Should only be executed on Fedora Netinstall
 
 ```bash
-$ curl -Ss "https://raw.githubusercontent.com/abdallah-eldali/auto-setup/refs/heads/main/setup.sh" | bash -c
+$ curl -Ss "https://raw.githubusercontent.com/abdallah-eldali/auto-setup/refs/heads/main/setup.sh" | bash
 ```
 
 # TODO:
