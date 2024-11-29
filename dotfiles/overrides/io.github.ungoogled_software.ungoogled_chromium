@@ -1,4 +1,0 @@
-[Context]
-sockets=!cups
-devices=!all
-filesystems=!home
