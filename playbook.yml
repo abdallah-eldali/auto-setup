@@ -5,38 +5,40 @@
   tasks:
     - name: "Setting up IPv6 Privacy Extension"
       become: true
-      copy:
+      ansible.builtin.copy:
         content: |
           [connections]
           ipv6.ip6-privacy=2
         dest: /etc/NetworkManager/conf.d/10-ip6-privacy.conf
         force: false
+        mode: '0600'
       notify: Reload NetworkManager
   handlers:
     - name: Reload NetworkManager
       become: true
-      command: nmcli general reload
+      ansible.builtin.command: nmcli general reload
       notify: Disable networking
 
     - name: Disable networking
-      command: nmcli networking off
+      ansible.builtin.command: nmcli networking off
       notify: Enable networking
 
     - name: Enable networking
-      command: nmcli networking on
+      ansible.builtin.command: nmcli networking on
       notify: Wait for network to start
     # FIX: This prints empty lines in playbook's output screen. Figure out how to remove it (or add a loading animation if possible)
     - name: Wait for network to start
-      command: nmcli networking connectivity
+      ansible.builtin.command: nmcli networking connectivity
       register: connectivity
       until: connectivity.stdout == "full"
+      changed_when: false
 
 - name: Setting up DNF packages
   hosts: localhost
   become: true
   tasks:
     - name: Removing packaes
-      dnf:
+      ansible.builtin.dnf:
         name:
           - nano
           - hplip
@@ -44,14 +46,14 @@
           - xarchiver
         state: absent
     - name: Swapping Fedora Release Packages for Sway's
-      dnf:
+      ansible.builtin.dnf:
         name:
           - fedora-release-sway
           - fedora-release-identity-sway
         state: latest
         allowerasing: true
     - name: Installing packages
-      dnf:
+      ansible.builtin.dnf:
         name:
           - nvim
           - fish
@@ -60,7 +62,7 @@
           - git
         state: latest
     - name: Upgrade all packages
-      dnf:
+      ansible.builtin.dnf:
         name: "*"
         state: latest
 
@@ -69,35 +71,35 @@
   tasks:
     - name: Installing Flatpak Package
       become: true
-      dnf:
+      ansible.builtin.dnf:
         name: flatpak
         state: latest
     - name: Add Flathub as Flatpak Repo
-      flatpak_remote:
+      community.general.flatpak_remote:
         name: flathub
         flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
         method: user
     - name: Install Flatpaks from Flathub
-      flatpak:
-          name:
-            - io.gitlab.librewolf-community
-            - org.keepassxc.KeePassXC
-            - org.mozilla.firefox
-            - com.github.tchx84.Flatseal
-            - io.freetubeapp.FreeTube
-          method: user
-          state: latest
+      community.general.flatpak:
+        name:
+          - io.gitlab.librewolf-community
+          - org.keepassxc.KeePassXC
+          - org.mozilla.firefox
+          - com.github.tchx84.Flatseal
+          - io.freetubeapp.FreeTube
+        method: user
+        state: latest
 
 - name: Disabling services/daemons
   hosts: localhost
   tasks:
     - name: Stop service shhd.socket
-      service:
+      ansible.builtin.service:
         name: sshd.socket
-        enabled: false 
+        enabled: false
         state: stopped
     - name: Stop service sshd.service
-      service:
+      ansible.builtin.service:
         name: sshd.service
         enabled: false
         state: stopped
@@ -114,7 +116,8 @@
       - "{{ ansible_env.HOME }}/.local/share/flatpak/overrides"
       - "{{ ansible_env.HOME }}/.bash_profile"
   tasks:
-    - ansible.builtin.include_tasks:
+    - name: Setting dotfiles
+      ansible.builtin.include_tasks:
         file: dotfiles-task.yml
       loop: "{{ dotfile_paths }}"
 ...
