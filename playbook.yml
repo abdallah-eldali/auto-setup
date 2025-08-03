@@ -85,6 +85,9 @@
 - name: Flatpak Playbook
   ansible.builtin.import_playbook: playbooks/flatpak.ansible.yml
 
+- name: DNF Automatic Playbook
+  ansible.builtin.import_playbook: playbooks/dnf-automatic.ansible.yml
+
 - name: Disabling services/daemons
   hosts: localhost
   become: true
