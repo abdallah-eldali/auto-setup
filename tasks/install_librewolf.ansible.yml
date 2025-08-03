@@ -1,0 +1,21 @@
+- name: Add Repository
+  become: true
+  ansible.builtin.command: dnf config-manager addrepo --from-repofile=https://repo.librewolf.net/librewolf.repo
+  args:
+    creates: /etc/yum.repos.d/librewolf.repo
+  register: adding_repo
+
+- name: Importing GPG Public Key
+  ansible.builtin.rpm_key:
+    key: https://repo.librewolf.net/pubkey.gpg
+    fingerprint: 662E 3CDD 6FE3 2900 2D0C A5BB 4033 9DD8 2B12 EF16
+    state: present
+  when: adding_repo
+  register: importing_key
+
+- name: Install LibreWolf
+  become: true
+  ansible.builtin.dnf:
+    name: librewolf
+    state: present
+  when: importing_key is succeeded

@@ -1,0 +1,25 @@
+---
+- name: RPMFusion Setup
+  hosts: localhost
+  become: true
+  tasks:
+    - name: Adding RPMFusion Free Repository
+      ansible.builtin.dnf:
+        name: https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ ansible_distribution_major_version }}.noarch.rpm
+        state: present
+      register: rpmfusion_added
+
+    - name: Setting up Codecs
+      when: rpmfusion_added is success
+      block:
+        - name: Enable openh264 Library
+          ansible.builtin.command: dnf config-manager setopt fedora-cisco-openh264.enabled=1
+        - name: Swapping Fedora Release Packages for Sway's
+          ansible.builtin.dnf:
+            name: ffmpeg
+            state: latest
+            allowerasing: true
+        - name: Installing codecs
+          ansible.builtin.dnf:
+            name: libva-intel-driver
+            state: present

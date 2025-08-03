@@ -1,0 +1,26 @@
+- name: Add VSCodium Repository
+  become: true
+  ansible.builtin.yum_repository:
+    name: download.vscodium.com
+    baseurl: https://download.vscodium.com/rpms/
+    enabled: true
+    gpgcheck: true
+    repo_gpgcheck: true
+    gpgkey: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
+    metadata_expire: "1h"
+  register: add_repo
+
+- name: Importing GPG Public Key
+  ansible.builtin.rpm_key:
+    key: https://gitlab.com/paulcarroty/vscodium-deb-rpm-repo/-/raw/master/pub.gpg
+    fingerprint: 1302 DE60 2318 89FE 1EBA CADC 5467 8CF7 5A27 8D9C
+    state: present
+  when: adding_repo
+  register: importing_key
+
+- name: Installing VSCodium
+  become: true
+  ansible.builtin.dnf:
+    name: codium
+    state: present
+  when: importing_key is success

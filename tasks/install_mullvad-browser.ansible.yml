@@ -1,0 +1,13 @@
+- name: Add Repository
+  become: true
+  ansible.builtin.command: dnf config-manager addrepo --from-repofile=https://repository.mullvad.net/rpm/stable/mullvad.repo
+  args:
+    creates: /etc/yum.repos.d/mullvad.repo
+  register: adding_repo
+
+- name: Install Mullvad Browser
+  become: true
+  ansible.builtin.dnf:
+    name: mullvad-browser
+    state: present
+  when: adding_repo is succeeded

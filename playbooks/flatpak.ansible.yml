@@ -1,0 +1,57 @@
+---
+- name: Setting Flatpak
+  hosts: localhost
+  tasks:
+    - name: Installing Flatpak Package
+      become: true
+      ansible.builtin.dnf:
+        name: flatpak
+        state: latest
+      register: flatpak_installed
+
+    - name: Add Flathub as Flatpak Repo
+      community.general.flatpak_remote:
+        name: flathub
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
+      when: flatpak_installed is success
+      register: flathub_added
+
+    - name: Install Flatpaks from Flathub
+      community.general.flatpak:
+        name:
+          - org.keepassxc.KeePassXC
+          - com.github.tchx84.Flatseal
+        method: user
+        state: latest
+      when: flathub_added is success
+
+    - name: Setup Automatic Updates Upon Startup
+      when: flatpak_installed is success
+      vars:
+        service_name: "flatpak-update.service"
+      block:
+        - name: Create a systemd user service to update Flatpaks on login
+          ansible.builtin.copy:
+            dest: "{{ ansible_env.HOME }}/.config/systemd/user/{{ service_name }}"
+            content: |
+              [Unit]
+              Description=Update Flatpaks on User Login
+              After=default.target
+
+              [Service]
+              Type=oneshot
+              ExecStart=flatpak update --noninteractive --assumeyes
+              RemainAfterExit=true
+
+              [Install]
+              WantedBy=default.target
+            mode: '0644'
+
+        - name: Start the flatpak update service for the user
+          ansible.builtin.systemd_service:
+            name: "{{ service_name }}"
+            enabled: true
+            state: started
+            scope: user
+            daemon_reload: true

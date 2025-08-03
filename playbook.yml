@@ -1,4 +1,3 @@
-# Look for handler, "ansible.builtin.debug", register
 ---
 - name: "Setting up NetworkManager configuration"
   hosts: localhost
@@ -63,34 +62,28 @@
           - toolbox
           - git
         state: latest
+    - name: Installing LibreWolf
+      ansible.builtin.import_tasks: tasks/install_librewolf.ansible.yml
+    - name: Installing Mullvad Browser
+      ansible.builtin.import_tasks: tasks/install_mullvad-browser.ansible.yml
+    # - name: Installing 3rd-Party Packages
+    #   vars:
+    #     packges:
+    #       - { repo_url: "https://repo.librewolf.net/librewolf.repo", package: "librewolf"}
+    #       - { repo_url: "https://repository.mullvad.net/rpm/stable/mullvad.repo", package: mullvad-browser}
+    #   ansible.builtin.include_tasks:
+    #     file: tasks/install_thirdparty_software.ansible.yml
+    #   loop: "{{ packges }}"
     - name: Upgrade all packages
       ansible.builtin.dnf:
         name: "*"
         state: latest
 
-- name: Setting Flatpak
-  hosts: localhost
-  tasks:
-    - name: Installing Flatpak Package
-      become: true
-      ansible.builtin.dnf:
-        name: flatpak
-        state: latest
-    - name: Add Flathub as Flatpak Repo
-      community.general.flatpak_remote:
-        name: flathub
-        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
-        method: user
-    - name: Install Flatpaks from Flathub
-      community.general.flatpak:
-        name:
-          - io.gitlab.librewolf-community
-          - org.keepassxc.KeePassXC
-          - org.mozilla.firefox
-          - com.github.tchx84.Flatseal
-          - io.freetubeapp.FreeTube
-        method: user
-        state: latest
+- name: RPMFusion Playbook
+  ansible.builtin.import_playbook: playbooks/rpmfusion.ansible.yml
+
+- name: Flatpak Playbook
+  ansible.builtin.import_playbook: playbooks/flatpak.ansible.yml
 
 - name: Disabling services/daemons
   hosts: localhost
@@ -120,6 +113,6 @@
   tasks:
     - name: Setting dotfiles
       ansible.builtin.include_tasks:
-        file: dotfiles-task.yml
+        file: dotfiles.ansible.yml
       loop: "{{ dotfile_paths }}"
 ...

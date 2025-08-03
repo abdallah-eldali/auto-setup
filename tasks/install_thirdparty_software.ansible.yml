@@ -1,0 +1,13 @@
+- name: Add Repository
+  become: true
+  ansible.builtin.command: dnf config-manager addrepo --from-repofile="{{ item.repo_url }}"
+  args:
+    creates: /etc/yum.repos.d/{{ item.repo_url.split('/')[-1] }}
+  register: adding_repo
+
+- name: Install 3rd-Party Package
+  become: true
+  ansible.builtin.dnf:
+    name: "{{ item.package }}"
+    state: present
+  when: adding_repo is succeeded
